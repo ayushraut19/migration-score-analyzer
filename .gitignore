@@ -1,0 +1,42 @@
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build
+target/
+build/
+out/
+dist/
+*.jar
+!SmartCityRecommender.jar
+
+# OS
+.DS_Store
+Thumbs.db
+*.exe
+*.dll
+
+# Logs
+logs/
+*.log
+
+# User data
+data/favorites.txt
+
+# Dependencies
+.m2/
+node_modules/
+
+# Miscellaneous
+*.class
+*.ctxt
+.classpath
+.project
+.settings/
+.gradle/

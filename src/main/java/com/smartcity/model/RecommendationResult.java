@@ -3,6 +3,7 @@ package com.smartcity.model;
 import com.smartcity.utils.ValidationUtils;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class RecommendationResult {
     private String dataSource;
     private String lastUpdated;
     private double confidenceScore;
+    private Map<LiveMetricType, MetricSourceStatus> metricStatuses;
     
     // Scoring intermediate values (for explainability)
     private double baseScore;
@@ -38,6 +40,7 @@ public class RecommendationResult {
         this.dataSource = locality.getDataSource();
         this.lastUpdated = locality.getLastUpdated();
         this.confidenceScore = locality.getConfidenceScore();
+        this.metricStatuses = locality.getMetricStatuses();
         this.baseScore = finalScore;
         this.totalPenalties = 0.0;
         this.totalBonuses = 0.0;
@@ -116,6 +119,27 @@ public class RecommendationResult {
 
     public void setConfidenceScore(double confidenceScore) {
         this.confidenceScore = Math.max(0.0, Math.min(1.0, confidenceScore));
+    }
+
+    public Map<LiveMetricType, MetricSourceStatus> getMetricStatuses() {
+        Map<LiveMetricType, MetricSourceStatus> copy = new EnumMap<>(LiveMetricType.class);
+        if (metricStatuses == null) {
+            return copy;
+        }
+        for (Map.Entry<LiveMetricType, MetricSourceStatus> entry : metricStatuses.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue().copy());
+        }
+        return copy;
+    }
+
+    public void setMetricStatuses(Map<LiveMetricType, MetricSourceStatus> metricStatuses) {
+        this.metricStatuses = new EnumMap<>(LiveMetricType.class);
+        if (metricStatuses == null) {
+            return;
+        }
+        for (Map.Entry<LiveMetricType, MetricSourceStatus> entry : metricStatuses.entrySet()) {
+            this.metricStatuses.put(entry.getKey(), entry.getValue().copy());
+        }
     }
 
     public List<String> getPenaltyReasons() {

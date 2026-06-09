@@ -69,13 +69,13 @@ public class InputPanel extends JPanel {
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
 
         JLabel title = UIUtils.createDisplayLabel(
-                "Smart City Finder"
+                "Best Locality Finder"
         );
 
         title.setForeground(Color.WHITE);
 
         JLabel subtitle = UIUtils.createSecondaryLabel(
-                "AI-powered migration recommendation dashboard"
+                "migration recommendation dashboard"
         );
 
         subtitle.setForeground(UIConstants.COLOR_WHITE_70);

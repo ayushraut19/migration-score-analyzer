@@ -3,7 +3,6 @@ package com.smartcity.utils;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
 
 public class UIUtils {
 

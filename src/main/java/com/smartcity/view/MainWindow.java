@@ -79,10 +79,10 @@ public class MainWindow extends JFrame implements RecommendationController.Contr
                 UIConstants.SPACING_MD,
                 UIConstants.SPACING_XL));
 
-        JLabel titleLabel = UIUtils.createTitleLabel("Smart City Finder");
+        JLabel titleLabel = UIUtils.createTitleLabel("Migration City Score Analyzer");
         titleLabel.setForeground(UIConstants.COLOR_WHITE);
 
-        JLabel subtitleLabel = UIUtils.createSmallLabel("Migration Score Analyzer Dashboard");
+        JLabel subtitleLabel = UIUtils.createSmallLabel("Score Analyzer Dashboard");
         subtitleLabel.setForeground(UIConstants.COLOR_WHITE_70);
 
         JPanel titlePanel = new JPanel();

@@ -35,6 +35,10 @@ public class RecommendationService {
         return recommendationEngine.rankLocalities(city, preferences);
     }
 
+    public void resetApiHealth() {
+        ApiService.getHealthManager().reset();
+    }
+
     public List<Locality> getAllLocalities() {
         return dataService.getAllLocalities();
     }

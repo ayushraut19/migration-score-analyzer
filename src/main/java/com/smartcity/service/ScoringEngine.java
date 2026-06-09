@@ -25,16 +25,6 @@ import java.util.*;
  */
 public class ScoringEngine {
 
-    private final PenaltyCalculator penaltyCalculator;
-    private final BonusCalculator bonusCalculator;
-    private final DecisionRulesEngine decisionRulesEngine;
-
-    public ScoringEngine() {
-        this.penaltyCalculator = new PenaltyCalculator();
-        this.bonusCalculator = new BonusCalculator();
-        this.decisionRulesEngine = new DecisionRulesEngine();
-    }
-
     /**
      * MAIN METHOD: Calculate comprehensive score for a locality.
      * 
@@ -86,6 +76,7 @@ public class ScoringEngine {
 
         // Step 7: Apply hybrid formula
         double finalScore = baseScore + bonuses - penalties;
+        finalScore *= confidenceMultiplier(locality.getConfidenceScore());
         finalScore = NormalizationUtil.clamp(finalScore);
 
         // Step 8: Generate result with full explainability
@@ -102,6 +93,11 @@ public class ScoringEngine {
         result.setBonusReasons(Collections.emptyList());
 
         return result;
+    }
+
+    private double confidenceMultiplier(double confidenceScore) {
+        double confidence = Math.max(0.0, Math.min(1.0, confidenceScore));
+        return 0.82 + (confidence * 0.18);
     }
 
     /**
@@ -462,13 +458,6 @@ public class ScoringEngine {
      * @param penalties Total penalty amount
      * @return Final score before clamping
      */
-    private double applyHybridFormula(double baseScore, double bonuses, double penalties) {
-        double weighted = baseScore * ScoringConfig.WEIGHTED_SUM_FACTOR;
-        double bonusComponent = bonuses * ScoringConfig.BONUS_FACTOR;
-        double penaltyComponent = penalties * ScoringConfig.PENALTY_FACTOR;
-
-        return weighted + bonusComponent - penaltyComponent;
-    }
 
     /**
      * Generate detailed, human-readable explanation for recommendation.

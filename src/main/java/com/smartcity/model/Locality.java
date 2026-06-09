@@ -2,6 +2,9 @@ package com.smartcity.model;
 
 import com.smartcity.utils.ValidationUtils;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 /**
  * Represents a locality with various metrics.
  * This is the core data model for the recommendation system.
@@ -23,6 +26,7 @@ public class Locality {
     private String dataSource = "Cached";
     private String lastUpdated = "N/A";
     private double confidenceScore = 0.5;
+    private Map<LiveMetricType, MetricSourceStatus> metricStatuses = createDefaultMetricStatuses();
 
     // Constructor
     public Locality(String id, String name, String city, String state, double avgRent, 
@@ -173,12 +177,45 @@ public class Locality {
         this.confidenceScore = Math.max(0.0, Math.min(1.0, confidenceScore));
     }
 
+    public Map<LiveMetricType, MetricSourceStatus> getMetricStatuses() {
+        Map<LiveMetricType, MetricSourceStatus> copy = new EnumMap<>(LiveMetricType.class);
+        for (Map.Entry<LiveMetricType, MetricSourceStatus> entry : metricStatuses.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue().copy());
+        }
+        return copy;
+    }
+
+    public void setMetricStatuses(Map<LiveMetricType, MetricSourceStatus> metricStatuses) {
+        this.metricStatuses = createDefaultMetricStatuses();
+        if (metricStatuses == null) {
+            return;
+        }
+        for (Map.Entry<LiveMetricType, MetricSourceStatus> entry : metricStatuses.entrySet()) {
+            this.metricStatuses.put(entry.getKey(), entry.getValue().copy());
+        }
+    }
+
+    public void setMetricStatus(LiveMetricType type, MetricSourceStatus status) {
+        if (type != null && status != null) {
+            metricStatuses.put(type, status.copy());
+        }
+    }
+
+    private Map<LiveMetricType, MetricSourceStatus> createDefaultMetricStatuses() {
+        Map<LiveMetricType, MetricSourceStatus> defaults = new EnumMap<>(LiveMetricType.class);
+        for (LiveMetricType type : LiveMetricType.values()) {
+            defaults.put(type, MetricSourceStatus.cached("Using stored fallback value."));
+        }
+        return defaults;
+    }
+
     public Locality copy() {
         Locality copy = new Locality(id, name, city, state, avgRent, jobIndex, hospitalRating, transportScore,
                 safetyScore, pollutionIndex, lifestyleScore, populationDensity, description);
         copy.setDataSource(dataSource);
         copy.setLastUpdated(lastUpdated);
         copy.setConfidenceScore(confidenceScore);
+        copy.setMetricStatuses(metricStatuses);
         return copy;
     }
 

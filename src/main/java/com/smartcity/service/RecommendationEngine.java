@@ -145,7 +145,6 @@ public class RecommendationEngine {
         }
 
         // Step 2: Identify and boost balanced localities in top 3
-        List<RecommendationResult> boosted = new ArrayList<>();
         int boostCount = 0;
         for (int i = 0; i < results.size() && boostCount < ScoringConfig.RE_RANK_TOP_N_BOOST; i++) {
             RecommendationResult result = results.get(i);

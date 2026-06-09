@@ -51,7 +51,11 @@ public class ConfigLoader {
      * Get property value
      */
     public static String getProperty(String key, String defaultValue) {
-        return properties.getProperty(key, defaultValue);
+        String value = properties.getProperty(key);
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return value.trim();
     }
 
     /**

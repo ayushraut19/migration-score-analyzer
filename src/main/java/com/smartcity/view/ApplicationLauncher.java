@@ -1,13 +1,8 @@
 package com.smartcity.view;
 
-import com.smartcity.controller.RecommendationController;
-import com.smartcity.model.RecommendationResult;
 import com.smartcity.utils.UIConstants;
-import com.smartcity.utils.UIUtils;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 /**
  * Application Launcher with initialization and error handling

@@ -7,7 +7,6 @@ import com.smartcity.service.RecommendationService;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -44,6 +43,7 @@ public class RecommendationController {
         currentPreferences.setSelectedCity(city);
         int requestId = requestSequence.incrementAndGet();
         notifyLoadingStateChanged(true, "Fetching live locality metrics...");
+        recommendationService.resetApiHealth();
 
         recommendationService.getRecommendations(city, currentPreferences)
                 .thenAccept(results -> SwingUtilities.invokeLater(() -> {

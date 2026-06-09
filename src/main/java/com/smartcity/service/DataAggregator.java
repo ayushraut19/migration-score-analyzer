@@ -1,7 +1,7 @@
 package com.smartcity.service;
 
+import com.smartcity.model.LiveMetricType;
 import com.smartcity.model.Locality;
-import com.smartcity.utils.ConfigLoader;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -20,10 +20,10 @@ public class DataAggregator {
         Locality enriched = locality.copy();
         return apiService.fetchMetrics(locality)
                 .handle((metrics, throwable) -> {
-                    if (throwable != null || metrics == null || "Cached" .equals(metrics.source)) {
+                    if (throwable != null || metrics == null) {
                         enriched.setDataSource("Cached");
-                        enriched.setLastUpdated(metrics != null ? metrics.timestamp : "N/A");
-                        enriched.setConfidenceScore(metrics != null ? metrics.confidenceScore : 0.50);
+                        enriched.setLastUpdated("N/A");
+                        enriched.setConfidenceScore(0.35);
                         return enriched;
                     }
 
@@ -33,12 +33,19 @@ public class DataAggregator {
     }
 
     private void applyLiveMetrics(Locality locality, ApiService.RawLocalityMetrics metrics) {
-        locality.setJobIndex(normalizeJobCount(metrics.jobCount, locality.getJobIndex()));
-        locality.setHospitalRating(normalizeHealthcareCount(metrics.hospitalCount, locality.getHospitalRating()));
-        locality.setTransportScore(normalizeTransportDuration(metrics.transportDuration, locality.getTransportScore()));
-        locality.setPollutionIndex(normalizeAirQuality(metrics.aqi, locality.getPollutionIndex()));
+        if (metrics.jobCount.isAvailable()) {
+            locality.setJobIndex(normalizeJobCount(metrics.jobCount.getValue(), locality.getJobIndex()));
+        }
+        if (metrics.hospitalCount.isAvailable()) {
+            locality.setHospitalRating(normalizeHealthcareCount(metrics.hospitalCount.getValue(), locality.getHospitalRating()));
+        }
+        if (metrics.transportDuration.isAvailable()) {
+            locality.setTransportScore(normalizeTransportDuration(metrics.transportDuration.getValue(), locality.getTransportScore()));
+        }
+        if (metrics.aqi.isAvailable()) {
+            locality.setPollutionIndex(normalizeAirQuality(metrics.aqi.getValue(), locality.getPollutionIndex()));
+        }
 
-        // Keep existing lifestyle score as a baseline
         if (locality.getLifestyleScore() <= 0) {
             locality.setLifestyleScore(6.0);
         }
@@ -46,9 +53,30 @@ public class DataAggregator {
         locality.setDataSource(metrics.source);
         locality.setLastUpdated(metrics.timestamp);
         locality.setConfidenceScore(metrics.confidenceScore);
+        locality.setMetricStatuses(metrics.metricStatuses);
 
-        if (metrics.costIndex >= 0) {
-            locality.setAvgRent(normalizeCostIndex(metrics.costIndex, locality.getAvgRent()));
+        if (metrics.costIndex.isAvailable()) {
+            locality.setAvgRent(normalizeCostIndex(metrics.costIndex.getValue(), locality.getAvgRent()));
+        }
+
+        applyFallbackStatusForUnavailable(locality, metrics);
+    }
+
+    private void applyFallbackStatusForUnavailable(Locality locality, ApiService.RawLocalityMetrics metrics) {
+        if (!metrics.jobCount.isAvailable()) {
+            locality.setMetricStatus(LiveMetricType.JOBS, metrics.jobCount.getStatus());
+        }
+        if (!metrics.costIndex.isAvailable()) {
+            locality.setMetricStatus(LiveMetricType.COST_OF_LIVING, metrics.costIndex.getStatus());
+        }
+        if (!metrics.aqi.isAvailable()) {
+            locality.setMetricStatus(LiveMetricType.AQI, metrics.aqi.getStatus());
+        }
+        if (!metrics.transportDuration.isAvailable()) {
+            locality.setMetricStatus(LiveMetricType.TRANSPORT, metrics.transportDuration.getStatus());
+        }
+        if (!metrics.hospitalCount.isAvailable()) {
+            locality.setMetricStatus(LiveMetricType.HEALTHCARE, metrics.hospitalCount.getStatus());
         }
     }
 

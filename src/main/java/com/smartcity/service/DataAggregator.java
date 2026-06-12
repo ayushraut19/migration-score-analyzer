@@ -10,6 +10,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public class DataAggregator {
 
+    private static final double LOCALITY_WEIGHT = 0.70;
+    private static final double LIVE_WEIGHT = 0.30;
+
     private final ApiService apiService;
 
     public DataAggregator() {
@@ -34,16 +37,32 @@ public class DataAggregator {
 
     private void applyLiveMetrics(Locality locality, ApiService.RawLocalityMetrics metrics) {
         if (metrics.jobCount.isAvailable()) {
-            locality.setJobIndex(normalizeJobCount(metrics.jobCount.getValue(), locality.getJobIndex()));
+            double original = locality.getJobIndex();
+            double liveScore = normalizeJobCount(metrics.jobCount.getValue(), original);
+            double blended = blendMetric(original, liveScore);
+            logMetricDebug(locality, "Jobs", original, metrics.jobCount.getValue(), liveScore, blended);
+            locality.setJobIndex(blended);
         }
         if (metrics.hospitalCount.isAvailable()) {
-            locality.setHospitalRating(normalizeHealthcareCount(metrics.hospitalCount.getValue(), locality.getHospitalRating()));
+            double original = locality.getHospitalRating();
+            double liveScore = normalizeHealthcareCount(metrics.hospitalCount.getValue(), original);
+            double blended = blendMetric(original, liveScore);
+            logMetricDebug(locality, "Healthcare", original, metrics.hospitalCount.getValue(), liveScore, blended);
+            locality.setHospitalRating(blended);
         }
         if (metrics.transportDuration.isAvailable()) {
-            locality.setTransportScore(normalizeTransportDuration(metrics.transportDuration.getValue(), locality.getTransportScore()));
+            double original = locality.getTransportScore();
+            double liveScore = normalizeTransportDuration(metrics.transportDuration.getValue(), original);
+            double blended = blendMetric(original, liveScore);
+            logMetricDebug(locality, "Transport", original, metrics.transportDuration.getValue(), liveScore, blended);
+            locality.setTransportScore(blended);
         }
         if (metrics.aqi.isAvailable()) {
-            locality.setPollutionIndex(normalizeAirQuality(metrics.aqi.getValue(), locality.getPollutionIndex()));
+            double original = locality.getPollutionIndex();
+            double liveScore = normalizeAirQuality(metrics.aqi.getValue(), original);
+            double blended = blendMetric(original, liveScore);
+            logMetricDebug(locality, "AQI", original, metrics.aqi.getValue(), liveScore, blended);
+            locality.setPollutionIndex(blended);
         }
 
         if (locality.getLifestyleScore() <= 0) {
@@ -56,7 +75,11 @@ public class DataAggregator {
         locality.setMetricStatuses(metrics.metricStatuses);
 
         if (metrics.costIndex.isAvailable()) {
-            locality.setAvgRent(normalizeCostIndex(metrics.costIndex.getValue(), locality.getAvgRent()));
+            double original = locality.getAvgRent();
+            double liveRent = normalizeCostIndex(metrics.costIndex.getValue(), original);
+            double blended = blendMetric(original, liveRent);
+            logMetricDebug(locality, "Cost", original, metrics.costIndex.getValue(), liveRent, blended);
+            locality.setAvgRent(blended);
         }
 
         applyFallbackStatusForUnavailable(locality, metrics);
@@ -78,6 +101,23 @@ public class DataAggregator {
         if (!metrics.hospitalCount.isAvailable()) {
             locality.setMetricStatus(LiveMetricType.HEALTHCARE, metrics.hospitalCount.getStatus());
         }
+    }
+
+    static double blendMetric(double localityMetric, double liveMetric) {
+        if (liveMetric < 0) {
+            return localityMetric;
+        }
+        return (localityMetric * LOCALITY_WEIGHT) + (liveMetric * LIVE_WEIGHT);
+    }
+
+    private void logMetricDebug(Locality locality, String metricName, double localityMetric,
+                                double rawApiValue, double normalizedApiValue, double finalValue) {
+        System.out.println("[LocalityDebug] " + locality.getName()
+                + " | " + metricName
+                + " | JSON=" + String.format("%.2f", localityMetric)
+                + " | RawAPI=" + String.format("%.2f", rawApiValue)
+                + " | NormalizedAPI=" + String.format("%.2f", normalizedApiValue)
+                + " | Final=" + String.format("%.2f", finalValue));
     }
 
     private double normalizeJobCount(double jobCount, double fallback) {
